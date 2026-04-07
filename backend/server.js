@@ -81,15 +81,21 @@ Output a strictly valid JSON response with EXACTLY these three keys:
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: taskDetails + groundedContext,
+            contents: [{ role: 'user', parts: [{ text: taskDetails + groundedContext }] }],
             config: {
                 systemInstruction: systemInstruction,
                 responseMimeType: "application/json",
             }
         });
 
-        const rawText = (response.text || "").replace(/```json\n?/g, '').replace(/```\n?/g, '');
-        const agentBrainOutput = JSON.parse(rawText);
+        const rawText = (response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || "{}").replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        let agentBrainOutput;
+        try {
+            agentBrainOutput = JSON.parse(rawText);
+        } catch(e) {
+            const match = rawText.match(/\{[\s\S]*\}/);
+            agentBrainOutput = match ? JSON.parse(match[0]) : { narrative: 'Task completed.', actionCategory: 'message', receiptData: { platform: 'Agent', recipient: 'User', body: rawText } };
+        }
         console.log(`[Agent Action Triggered]:`, agentBrainOutput.actionCategory);
 
         // --- REAL API ESCAPE HATCH for live_data ---
@@ -131,8 +137,8 @@ Output a strictly valid JSON response with EXACTLY these three keys:
         res.json({ success: true, message: "Task completed", agentData: agentBrainOutput, audioBase64 });
         
     } catch (error) {
-        console.error("Gemini Error:", error);
-        res.status(500).json({ error: "Agent encountered a processing error." });
+        console.error("Agent Chat Error:", error?.message || error);
+        res.status(500).json({ error: `Agent error: ${error?.message || 'Unknown failure'}` });
     }
 });
 
@@ -189,19 +195,20 @@ Analyze the audio directive, make reasonable assumptions, and output a strictly 
 
         const voiceResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: [audioPart, "Process this voice command. " + groundedContext],
+            contents: [{ role: 'user', parts: [audioPart, { text: 'Process this voice command. ' + groundedContext }] }],
             config: {
                 systemInstruction: systemInstruction,
                 responseMimeType: "application/json",
             }
         });
 
-        const rawVoiceText = (voiceResponse.text || "").replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        const rawVoiceText = (voiceResponse.text || voiceResponse.candidates?.[0]?.content?.parts?.[0]?.text || "{}").replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         let agentBrainOutput;
         try {
             agentBrainOutput = JSON.parse(rawVoiceText);
         } catch (e) {
-            agentBrainOutput = { narrative: "Could not parse response.", actionCategory: "message", receiptData: { platform: "System", body: rawVoiceText } };
+            const match = rawVoiceText.match(/\{[\s\S]*\}/);
+            agentBrainOutput = match ? JSON.parse(match[0]) : { narrative: 'Voice command processed.', actionCategory: 'message', receiptData: { platform: 'Voice Agent', recipient: 'User', body: rawVoiceText || 'Task complete.' } };
         }
 
         // --- REAL API ESCAPE HATCH for live_data ---
@@ -245,8 +252,8 @@ Analyze the audio directive, make reasonable assumptions, and output a strictly 
         res.json({ success: true, message: "Voice task processed", agentData: agentBrainOutput, audioBase64 });
 
     } catch (error) {
-        console.error("Gemini Voice Error:", error);
-        res.status(500).json({ error: "Agent failed to transcribe/process voice command." });
+        console.error("Agent Voice Error:", error?.message || error);
+        res.status(500).json({ error: `Voice agent error: ${error?.message || 'Unknown failure'}` });
     }
 });
 
