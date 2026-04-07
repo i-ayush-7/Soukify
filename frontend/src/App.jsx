@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Shield, Zap, Lock, X, Play, Calendar, CreditCard, Mail, Mic, StopCircle, Send, Users, FileText, Share2, Home, Power, HeartPulse, Stethoscope, MessageSquare, Terminal, TrendingUp, Activity, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 // ─── Agent Data ───────────────────────────────────────────────────────────
 const agents = [
   {
@@ -582,7 +584,7 @@ function Marketplace({ userProfile, onLogout }) {
   const handleHireAgent = async () => {
     setIsHiring(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/hire', {
+      const res = await axios.post(`${API_BASE}/api/hire`, {
         agentId: selectedAgent.id,
         scopes: selectedAgent.requestedScopes.map(s => s.id),
         userId: userProfile.email
@@ -600,7 +602,7 @@ function Marketplace({ userProfile, onLogout }) {
 
   const handleRevoke = async (jobId, token) => {
     try {
-      await axios.post('http://localhost:5000/api/revoke', { token });
+      await axios.post(`${API_BASE}/api/revoke`, { token });
       setActiveJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: 'done', token: null } : j));
     } catch (e) { console.error(e); }
   };
@@ -618,7 +620,7 @@ function Marketplace({ userProfile, onLogout }) {
     try {
       let res;
       if (inputType === 'text') {
-        res = await axios.post('http://localhost:5000/api/agent/chat', {
+        res = await axios.post(`${API_BASE}/api/agent/chat`, {
           token: job.token, taskDetails: prompt,
           agentContext: { description: job.agent.description },
           userProfile
@@ -629,7 +631,7 @@ function Marketplace({ userProfile, onLogout }) {
         formData.append('token', JSON.stringify(job.token));
         formData.append('agentContext', JSON.stringify({ description: job.agent.description }));
         formData.append('userProfile', JSON.stringify(userProfile));
-        res = await axios.post('http://localhost:5000/api/agent/voice', formData, {
+        res = await axios.post(`${API_BASE}/api/agent/voice`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
       }
