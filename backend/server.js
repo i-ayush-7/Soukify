@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { GoogleGenAI } = require('@google/genai');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -256,6 +257,13 @@ app.post('/api/revoke', (req, res) => {
     res.json({ success: true, message: "Task token successfully revoked." });
 });
 
+// ─── Serve React Frontend (production) ─────────────────────────────────────
+const frontendDist = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDist));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+});
+
 app.listen(PORT, () => {
-    console.log(`Soukify Backend v2 listening on port ${PORT}`);
+    console.log(`Soukify listening on port ${PORT}`);
 });

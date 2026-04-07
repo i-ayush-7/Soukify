@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Shield, Zap, Lock, X, Play, Calendar, CreditCard, Mail, Mic, StopCircle, Send, Users, FileText, Share2, Home, Power, HeartPulse, Stethoscope, MessageSquare, Terminal, TrendingUp, Activity, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 // ─── Agent Data ───────────────────────────────────────────────────────────
 const agents = [
