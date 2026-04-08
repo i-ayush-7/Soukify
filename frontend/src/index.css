@@ -737,7 +737,7 @@ section { position: relative; z-index: 2; }
 
 /* ─── SCOPE MODAL ─── */
 .scope-modal-overlay {
-  position: fixed; inset: 0; z-index: 800;
+  position: fixed; inset: 0; z-index: 99999;
   background: rgba(5,5,10,0.85); backdrop-filter: blur(16px);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }

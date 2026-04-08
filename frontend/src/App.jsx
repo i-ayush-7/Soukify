@@ -582,6 +582,7 @@ function Marketplace({ userProfile, onLogout }) {
   }, []);
 
   const handleHireAgent = async () => {
+    console.log("Hire button clicked for agent:", selectedAgent?.name);
     setIsHiring(true);
     let tokenBundle;
     try {
@@ -589,11 +590,11 @@ function Marketplace({ userProfile, onLogout }) {
         agentId: selectedAgent.id,
         scopes: selectedAgent.requestedScopes.map(s => s.id),
         userId: userProfile.email
-      });
+      }, { timeout: 4000 });
       tokenBundle = res.data.tokenBundle;
+      console.log("Token minted successfully from Vault API");
     } catch (e) {
-      console.warn('Hire API unreachable, using local mock token:', e.message);
-      // Fallback: create a local mock token so the pipeline always works
+      console.warn('Vault API unreachable or timed out, spawning locally:', e.message);
       tokenBundle = {
         access_token: `local_mock_${Math.random().toString(36).substring(7)}_${Date.now()}`,
         expires_in: 3600,
@@ -607,6 +608,7 @@ function Marketplace({ userProfile, onLogout }) {
       createdAt: new Date().toLocaleTimeString(), pipelines: []
     };
     setActiveJobs(prev => [newJob, ...prev]);
+    console.log("New job added to activeJobs. Count:", activeJobs.length + 1);
     setSelectedAgent(null);
     setIsHiring(false);
   };
@@ -757,7 +759,7 @@ function Marketplace({ userProfile, onLogout }) {
                     <div className="agent-price">{agent.price} <span>{agent.priceUnit}</span></div>
                     <div className="agent-rating"><span className="stars">★★★★★</span> {agent.rating}</div>
                   </div>
-                  <button className="btn-hire" onClick={() => setSelectedAgent(agent)}>
+                  <button className="btn-hire" onClick={() => { console.log("Hire Now clicked for agent:", agent.name); setSelectedAgent(agent); }}>
                     Hire Now
                   </button>
                 </div>
